@@ -115,6 +115,9 @@ Os valores vindos da loja nunca são interpretados como formatação, então um 
 Requisitos: Docker (ou JDK 25 local).
 
 ```bash
+git clone https://github.com/minepag/minecraft-plugin.git
+cd minecraft-plugin
+
 # Build e testes (gera build/libs/MinePag.jar)
 docker run --rm -v "$PWD":/home/gradle/project -v minepag-gradle-cache:/home/gradle/.gradle \
   -w /home/gradle/project gradle:9.8.1-jdk25 gradle build --no-daemon
@@ -124,7 +127,32 @@ docker run --rm -v "$PWD":/home/gradle/project -v minepag-gradle-cache:/home/gra
 ```
 
 - Compila contra `paper-api` 26.3 com JDK 25 e gera bytecode Java 21 (`options.release = 21`), para rodar também no Paper 1.21.x.
-- Testes JUnit 5 cobrem ajuda e tab-complete por permissão, parsing do protocolo, backoff e Retry-After, journal SQLite, lista de bloqueio e conversão de mensagens para o formato legado.
+- Testes JUnit 5 cobrem ajuda e tab-complete por permissão, parsing do protocolo, contrato com a MinePag, backoff e Retry-After, journal SQLite, lista de bloqueio e conversão de mensagens para o formato legado.
+
+| Pasta | O que tem |
+|---|---|
+| `src/main/java/com/minepag/plugin/command` | `/minepag` e subcomandos |
+| `src/main/java/com/minepag/plugin/polling` | Busca de entregas, confirmações e heartbeat |
+| `src/main/java/com/minepag/plugin/delivery` | Execução dos comandos, journal SQLite, lista de bloqueio e anúncios |
+| `src/main/java/com/minepag/plugin/protocol` | Tipos e cliente HTTP do protocolo |
+| `src/main/java/com/minepag/plugin/platform` | Diferenças entre Paper, Folia e Spigot |
+| `protocol/` | Contrato do protocolo publicado pela MinePag |
+
+### Testar num servidor de verdade
+
+Servidor Paper 26.3 em Docker com o plugin compilado:
+
+```bash
+docker run --rm -e EULA=TRUE -e TYPE=PAPER -e VERSION=26.3 -p 25565:25565 \
+  -v "$PWD/build/libs:/plugins" itzg/minecraft-server
+```
+
+Para usar uma MinePag rodando na sua máquina, ajuste o `api-url` em `plugins/MinePag/config.yml`. HTTP só é aceito para endereços locais:
+
+- servidor fora do Docker: `api-url: "http://localhost:3100"`;
+- servidor no Docker (como no exemplo acima): `api-url: "http://host.docker.internal:3100"`.
+
+Gere o código de pareamento no painel local e rode `minepag pair <código>` no console do servidor.
 
 ### Protocolo
 
@@ -159,17 +187,16 @@ Servidores ficam meses em versões antigas do plugin. Por isso a MinePag só faz
 
 3. O workflow `Build` compila, testa e publica a release com `MinePag.jar` e `MinePag.jar.sha256`. O link `releases/latest/download/MinePag.jar` passa a entregar a versão nova, e é ele que o painel da MinePag usa.
 
-Teste manual com servidor real (exemplo com Paper 26.3):
+## Contribuir
 
-```bash
-docker run --rm -e EULA=TRUE -e TYPE=PAPER -e VERSION=26.3 -p 25565:25565 \
-  -v "$PWD/build/libs:/plugins" itzg/minecraft-server
-```
+- **Bugs e sugestões:** abra uma [issue](https://github.com/minepag/minecraft-plugin/issues) com a versão do plugin, a plataforma (Paper, Folia, Purpur ou Spigot), a versão do Minecraft e o trecho do console. Nunca cole o `credentials.yml` nem o token do servidor.
+- **Pull requests:** rode `./gradlew build` antes de enviar; o workflow `Build` roda os mesmos testes em cada PR. Mudanças que alteram o que o plugin envia ou lê precisam continuar passando no `ProtocolContractTest`. Se a mudança depender de algo novo na MinePag, abra uma issue antes.
+- **Dúvidas de uso da loja:** fale com o suporte da MinePag pelo painel.
 
-Para testar contra uma MinePag local, use `api-url: "http://localhost:3000"` (HTTP só é aceito para localhost).
+## Segurança
 
-## Segurança e licença
+Não abra issue pública para falhas de segurança. Use o [formulário privado do GitHub](https://github.com/minepag/minecraft-plugin/security/advisories/new) (Security › Report a vulnerability) ou escreva para security@minepag.com.br. Os detalhes estão em [SECURITY.md](SECURITY.md).
 
-Falhas de segurança vão por e-mail, não por issue: veja [SECURITY.md](SECURITY.md).
+## Licença
 
 Código aberto sob a [licença Apache 2.0](LICENSE).
