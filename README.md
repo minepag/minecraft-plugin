@@ -132,6 +132,7 @@ docker run --rm -v "$PWD":/home/gradle/project -v minepag-gradle-cache:/home/gra
 | Pasta | O que tem |
 |---|---|
 | `src/main/java/com/minepag/plugin/command` | `/minepag` e subcomandos |
+| `src/main/java/com/minepag/plugin/config` | `config.yml`, mensagens e `credentials.yml` |
 | `src/main/java/com/minepag/plugin/polling` | Busca de entregas, confirmações e heartbeat |
 | `src/main/java/com/minepag/plugin/delivery` | Execução dos comandos, journal SQLite, lista de bloqueio e anúncios |
 | `src/main/java/com/minepag/plugin/protocol` | Tipos e cliente HTTP do protocolo |
