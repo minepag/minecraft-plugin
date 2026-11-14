@@ -178,10 +178,11 @@ Servidores ficam meses em versões antigas do plugin. Por isso a MinePag só faz
 
 ### Release
 
-1. Atualize `version` em `build.gradle.kts`.
-2. Crie e envie a tag com a mesma versão:
+1. Atualize `version` em `build.gradle.kts` num pull request e faça o merge depois que o check `Build e testes` passar.
+2. Na `main` atualizada, crie e envie a tag com a mesma versão:
 
    ```bash
+   git switch main && git pull
    git tag v1.0.1
    git push origin v1.0.1
    ```
@@ -191,7 +192,7 @@ Servidores ficam meses em versões antigas do plugin. Por isso a MinePag só faz
 ## Contribuir
 
 - **Bugs e sugestões:** abra uma [issue](https://github.com/minepag/minecraft-plugin/issues) com a versão do plugin, a plataforma (Paper, Folia, Purpur ou Spigot), a versão do Minecraft e o trecho do console. Nunca cole o `credentials.yml` nem o token do servidor.
-- **Pull requests:** rode `./gradlew build` antes de enviar; o workflow `Build` roda os mesmos testes em cada PR. Mudanças que alteram o que o plugin envia ou lê precisam continuar passando no `ProtocolContractTest`. Se a mudança depender de algo novo na MinePag, abra uma issue antes.
+- **Pull requests:** toda mudança entra por PR, inclusive da equipe: a `main` é protegida e só aceita merge com o check `Build e testes` verde e as conversas resolvidas. Rode `./gradlew build` antes de enviar; o workflow `Build` roda os mesmos testes em cada PR. Mudanças que alteram o que o plugin envia ou lê precisam continuar passando no `ProtocolContractTest`. Se a mudança depender de algo novo na MinePag, abra uma issue antes.
 - **Dúvidas de uso da loja:** fale com o suporte da MinePag pelo painel.
 
 ## Segurança
