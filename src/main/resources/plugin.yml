@@ -1,0 +1,46 @@
+name: MinePag
+main: com.minepag.plugin.MinePagPlugin
+version: '${version}'
+api-version: '1.21'
+folia-supported: true
+description: Entrega automática das compras da sua loja MinePag.
+website: https://minepag.com.br
+authors: [MinePag]
+softdepend: [LuckPerms]
+libraries:
+  - org.xerial:sqlite-jdbc:${sqliteJdbcVersion}
+
+commands:
+  minepag:
+    description: Gerencia a integração com a MinePag.
+    usage: /minepag help
+    aliases: [mpag]
+
+permissions:
+  minepag.use:
+    description: Permite ver a ajuda do /minepag.
+    default: true
+  minepag.link:
+    description: Permite vincular a própria conta da loja com /minepag link <código>.
+    default: true
+  minepag.admin:
+    description: Acesso completo à administração da MinePag no servidor.
+    default: op
+    children:
+      minepag.use: true
+      minepag.admin.pair: true
+      minepag.admin.status: true
+      minepag.admin.forcecheck: true
+      minepag.admin.reload: true
+  minepag.admin.pair:
+    description: Permite parear e desparear o servidor (/minepag pair e /minepag unpair).
+    default: op
+  minepag.admin.status:
+    description: Permite ver o estado da integração (/minepag status).
+    default: op
+  minepag.admin.forcecheck:
+    description: Permite buscar entregas imediatamente (/minepag forcecheck).
+    default: op
+  minepag.admin.reload:
+    description: Permite recarregar o config.yml (/minepag reload).
+    default: op

@@ -1,0 +1,1291 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Protocolo do plugin Minecraft da MinePag",
+    "version": "1.0.0",
+    "description": "Rotas que o plugin do servidor Minecraft chama para parear, buscar comandos, confirmar entregas e vincular jogadores. Corpo e resposta em JSON; erros no formato `{ error: { code, message } }`. Servidores ficam meses em versões antigas do plugin, então mudanças aqui precisam ser compatíveis ou ir para uma nova versão do caminho."
+  },
+  "servers": [
+    {
+      "url": "https://minepag.com.br/api/minecraft/v1",
+      "description": "Produção"
+    }
+  ],
+  "paths": {
+    "/pair": {
+      "post": {
+        "operationId": "minecraft.pair",
+        "summary": "Parear o servidor",
+        "description": "Troca o código de pareamento gerado no painel (Entregas › Minecraft) pelo token do servidor. O token só aparece nesta resposta: guarde-o e envie em `Authorization: Bearer` nas outras rotas.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "pattern": "^[A-Z0-9]{8}$"
+                  },
+                  "server": {
+                    "type": "object",
+                    "properties": {
+                      "pluginVersion": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 40
+                      },
+                      "platform": {
+                        "type": "string",
+                        "enum": [
+                          "paper",
+                          "folia",
+                          "purpur",
+                          "spigot"
+                        ]
+                      },
+                      "mcVersion": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 40
+                      },
+                      "motd": {
+                        "type": "string",
+                        "maxLength": 200
+                      },
+                      "onlineMode": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "pluginVersion",
+                      "platform",
+                      "mcVersion",
+                      "onlineMode"
+                    ]
+                  }
+                },
+                "required": [
+                  "code",
+                  "server"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "format": "starts_with"
+                    },
+                    "server": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "project": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "storeUrl": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "uri"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "storeUrl"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "nextPollSeconds": {
+                      "type": "integer",
+                      "minimum": 5,
+                      "maximum": 300
+                    }
+                  },
+                  "required": [
+                    "token",
+                    "server",
+                    "project",
+                    "nextPollSeconds"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_json`: O corpo da requisição não é um JSON válido. `invalid_pairing_code`: Código de pareamento inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "`pairing_code_expired`: O código de pareamento expirou. Gere um novo no painel.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "`payload_too_large`: O corpo da requisição é grande demais.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`validation_failed`: Os dados enviados são inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "423": {
+            "description": "`server_paused`: Este servidor está pausado no painel da MinePag. As entregas voltam quando ele for reativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "426": {
+            "description": "`plugin_outdated`: A versão do plugin está desatualizada. Atualize para continuar.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`rate_limited`: Muitas requisições. Aguarde um momento e tente novamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal_error`: Ocorreu um erro inesperado. Tente novamente em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pull": {
+      "post": {
+        "operationId": "minecraft.pull",
+        "summary": "Buscar comandos e anúncios",
+        "description": "Reserva até `limit` comandos por 120 s e devolve os anúncios de compra. Confirme cada comando em `/ack` antes de a reserva vencer; um comando não confirmado volta para a fila. Respeite `nextPollSeconds` e chame de novo na hora se `hasMore` for `true`.",
+        "security": [
+          {
+            "tokenDoServidor": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "pluginVersion": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40
+                  },
+                  "platform": {
+                    "type": "string",
+                    "enum": [
+                      "paper",
+                      "folia",
+                      "purpur",
+                      "spigot"
+                    ]
+                  },
+                  "mcVersion": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40
+                  },
+                  "onlinePlayers": {
+                    "maxItems": 2000,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "uuid": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "name": {
+                          "type": "string",
+                          "pattern": "^(?:[A-Za-z0-9_]{3,16}|\\.[A-Za-z0-9_]{1,15})$"
+                        }
+                      },
+                      "required": [
+                        "uuid",
+                        "name"
+                      ]
+                    }
+                  },
+                  "limit": {
+                    "default": 50,
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100
+                  },
+                  "onlyPlayerUuids": {
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  }
+                },
+                "required": [
+                  "pluginVersion",
+                  "platform",
+                  "mcVersion",
+                  "onlinePlayers"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "commands": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "command": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 1000,
+                            "pattern": "^\\P{Cc}+$"
+                          },
+                          "requireOnline": {
+                            "type": "boolean"
+                          },
+                          "requiredSlots": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 36
+                          },
+                          "playerUuid": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "playerName": {
+                            "type": "string",
+                            "pattern": "^(?:[A-Za-z0-9_]{3,16}|\\.[A-Za-z0-9_]{1,15})$"
+                          },
+                          "attempt": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "leaseExpiresAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "command",
+                          "requireOnline",
+                          "requiredSlots",
+                          "attempt",
+                          "leaseExpiresAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "announcements": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "playerName": {
+                            "type": "string",
+                            "pattern": "^(?:[A-Za-z0-9_]{3,16}|\\.[A-Za-z0-9_]{1,15})$"
+                          },
+                          "productName": {
+                            "type": "string",
+                            "maxLength": 120
+                          },
+                          "storeUrl": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "uri"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "playerName",
+                          "productName",
+                          "storeUrl"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "nextPollSeconds": {
+                      "type": "integer",
+                      "minimum": 5,
+                      "maximum": 300
+                    },
+                    "hasMore": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "commands",
+                    "announcements",
+                    "nextPollSeconds",
+                    "hasMore"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_json`: O corpo da requisição não é um JSON válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthenticated`: Autenticação necessária. `server_token_revoked`: O token do servidor foi revogado. Pareie o servidor novamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "`payload_too_large`: O corpo da requisição é grande demais.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`validation_failed`: Os dados enviados são inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "423": {
+            "description": "`server_paused`: Este servidor está pausado no painel da MinePag. As entregas voltam quando ele for reativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "426": {
+            "description": "`plugin_outdated`: A versão do plugin está desatualizada. Atualize para continuar.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`rate_limited`: Muitas requisições. Aguarde um momento e tente novamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal_error`: Ocorreu um erro inesperado. Tente novamente em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ack": {
+      "post": {
+        "operationId": "minecraft.ack",
+        "summary": "Confirmar comandos",
+        "description": "Informa o resultado de cada comando reservado. É idempotente: um resultado repetido ou de reserva vencida volta em `ignored`. `unknown` nunca é reexecutado; `deferred` volta para a fila sem contar tentativa.",
+        "security": [
+          {
+            "tokenDoServidor": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "results": {
+                    "minItems": 1,
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "succeeded",
+                            "failed",
+                            "unknown",
+                            "deferred"
+                          ]
+                        },
+                        "output": {
+                          "type": "string",
+                          "maxLength": 1000
+                        },
+                        "executedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "status",
+                        "executedAt"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "results"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accepted": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "ignored": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    }
+                  },
+                  "required": [
+                    "accepted",
+                    "ignored"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_json`: O corpo da requisição não é um JSON válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthenticated`: Autenticação necessária. `server_token_revoked`: O token do servidor foi revogado. Pareie o servidor novamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "`payload_too_large`: O corpo da requisição é grande demais.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`validation_failed`: Os dados enviados são inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "423": {
+            "description": "`server_paused`: Este servidor está pausado no painel da MinePag. As entregas voltam quando ele for reativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`rate_limited`: Muitas requisições. Aguarde um momento e tente novamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal_error`: Ocorreu um erro inesperado. Tente novamente em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/heartbeat": {
+      "post": {
+        "operationId": "minecraft.heartbeat",
+        "summary": "Enviar o estado do servidor",
+        "description": "Atualiza jogadores online, TPS e versões. Envie a cada 300 s. `minPluginVersion` avisa quando o plugin precisa ser atualizado, e `messages` traz avisos para o console.",
+        "security": [
+          {
+            "tokenDoServidor": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "pluginVersion": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40
+                  },
+                  "platform": {
+                    "type": "string",
+                    "enum": [
+                      "paper",
+                      "folia",
+                      "purpur",
+                      "spigot"
+                    ]
+                  },
+                  "mcVersion": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40
+                  },
+                  "onlinePlayers": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "maxPlayers": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "tps": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "javaVersion": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40
+                  }
+                },
+                "required": [
+                  "pluginVersion",
+                  "platform",
+                  "mcVersion",
+                  "onlinePlayers",
+                  "maxPlayers"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "nextPollSeconds": {
+                      "type": "integer",
+                      "minimum": 5,
+                      "maximum": 300
+                    },
+                    "minPluginVersion": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 40
+                    },
+                    "messages": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 300
+                      }
+                    }
+                  },
+                  "required": [
+                    "nextPollSeconds",
+                    "minPluginVersion",
+                    "messages"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_json`: O corpo da requisição não é um JSON válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthenticated`: Autenticação necessária. `server_token_revoked`: O token do servidor foi revogado. Pareie o servidor novamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "`payload_too_large`: O corpo da requisição é grande demais.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`validation_failed`: Os dados enviados são inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "423": {
+            "description": "`server_paused`: Este servidor está pausado no painel da MinePag. As entregas voltam quando ele for reativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "426": {
+            "description": "`plugin_outdated`: A versão do plugin está desatualizada. Atualize para continuar.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`rate_limited`: Muitas requisições. Aguarde um momento e tente novamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal_error`: Ocorreu um erro inesperado. Tente novamente em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/link": {
+      "post": {
+        "operationId": "minecraft.link",
+        "summary": "Vincular a conta do jogador",
+        "description": "Vincula o jogador ao cliente da loja pelo código que ele gerou na área do cliente. Libera as entregas que aguardavam o vínculo.",
+        "security": [
+          {
+            "tokenDoServidor": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "pattern": "^[A-Z0-9]{6,12}$"
+                  },
+                  "playerUuid": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "playerName": {
+                    "type": "string",
+                    "pattern": "^(?:[A-Za-z0-9_]{3,16}|\\.[A-Za-z0-9_]{1,15})$"
+                  }
+                },
+                "required": [
+                  "code",
+                  "playerUuid",
+                  "playerName"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "linked": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 300
+                    }
+                  },
+                  "required": [
+                    "linked",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_json`: O corpo da requisição não é um JSON válido. `invalid_link_code`: Código de vínculo inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthenticated`: Autenticação necessária. `server_token_revoked`: O token do servidor foi revogado. Pareie o servidor novamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "`payload_too_large`: O corpo da requisição é grande demais.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`validation_failed`: Os dados enviados são inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "423": {
+            "description": "`server_paused`: Este servidor está pausado no painel da MinePag. As entregas voltam quando ele for reativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`rate_limited`: Muitas requisições. Aguarde um momento e tente novamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal_error`: Ocorreu um erro inesperado. Tente novamente em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/unpair": {
+      "post": {
+        "operationId": "minecraft.unpair",
+        "summary": "Desparear o servidor",
+        "description": "Revoga o token do próprio servidor (`/minepag unpair`). Responde 204 sem corpo.",
+        "security": [
+          {
+            "tokenDoServidor": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Sucesso, sem corpo."
+          },
+          "400": {
+            "description": "`invalid_json`: O corpo da requisição não é um JSON válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthenticated`: Autenticação necessária. `server_token_revoked`: O token do servidor foi revogado. Pareie o servidor novamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "`payload_too_large`: O corpo da requisição é grande demais.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`validation_failed`: Os dados enviados são inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "423": {
+            "description": "`server_paused`: Este servidor está pausado no painel da MinePag. As entregas voltam quando ele for reativado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`rate_limited`: Muitas requisições. Aguarde um momento e tente novamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal_error`: Ocorreu um erro inesperado. Tente novamente em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "tokenDoServidor": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Token do servidor (`mps_…`), devolvido uma única vez por `/pair`."
+      }
+    },
+    "schemas": {
+      "Erro": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "null"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "code",
+                "message"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "unauthenticated",
+                  "invalid_api_key",
+                  "forbidden",
+                  "insufficient_scope",
+                  "not_found",
+                  "invalid_json",
+                  "validation_failed",
+                  "payload_too_large",
+                  "conflict",
+                  "idempotency_conflict",
+                  "rate_limited",
+                  "project_restricted",
+                  "checkout_paused",
+                  "payment_method_unavailable",
+                  "payment_declined",
+                  "payment_provider_unavailable",
+                  "refund_not_allowed",
+                  "refund_amount_exceeded",
+                  "cart_not_found",
+                  "cart_empty",
+                  "cart_already_checked_out",
+                  "product_unavailable",
+                  "out_of_stock",
+                  "coupon_invalid",
+                  "coupon_not_applicable",
+                  "checkout_blocked",
+                  "order_not_payable",
+                  "invalid_webhook_signature",
+                  "delivery_already_finalized",
+                  "invalid_pairing_code",
+                  "pairing_code_expired",
+                  "server_token_revoked",
+                  "server_paused",
+                  "invalid_link_code",
+                  "invalid_player_name",
+                  "plugin_outdated",
+                  "internal_error",
+                  "service_unavailable"
+                ]
+              },
+              "message": {
+                "type": "string"
+              },
+              "issues": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "details": {
+                "description": "Dados para seguir o fluxo. Em `payment_declined`, o mesmo objeto da resposta de sucesso do checkout: pedido, pagamento recusado, `accessToken` e `orderUrl`. Em `payment_provider_unavailable` no checkout e na nova tentativa de pagamento, o pedido já criado, o pagamento pendente (sem cobrança), o `accessToken` e o `orderUrl`.",
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              },
+              "requestId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "requestId"
+            ],
+            "additionalProperties": false
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "requestId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "requestId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "data",
+          "errors",
+          "error",
+          "meta"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "x-minepag-blocked-commands": [
+    "op",
+    "deop",
+    "stop",
+    "restart",
+    "reload",
+    "rl",
+    "whitelist",
+    "ban-ip",
+    "pardon-ip",
+    "save-off",
+    "transfer",
+    "sudo",
+    "esudo",
+    "plugman",
+    "minepag",
+    "mpag",
+    "lp editor",
+    "luckperms editor",
+    "lp import",
+    "luckperms import"
+  ],
+  "x-minepag-limits": {
+    "defaultPollSeconds": 30,
+    "minPollSeconds": 5,
+    "maxPollSeconds": 300,
+    "commandLeaseSeconds": 120,
+    "pairingCodeTtlMinutes": 10,
+    "linkCodeTtlMinutes": 10,
+    "maxOnlinePlayers": 2000,
+    "maxCommandsPerPull": 100,
+    "maxAckBatch": 100,
+    "heartbeatIntervalSeconds": 300
+  }
+}

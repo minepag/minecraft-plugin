@@ -1,0 +1,148 @@
+# Configuração do plugin MinePag.
+# O token do servidor NÃO fica aqui: ele é salvo em plugins/MinePag/data/credentials.yml
+# depois do /minepag pair. Você pode compartilhar este arquivo com o suporte sem expor a loja.
+
+# Endereço da MinePag. Só altere com orientação do suporte. Precisa ser HTTPS
+# (HTTP só é aceito para localhost, em desenvolvimento).
+api-url: "https://minepag.com.br"
+
+# Intervalo mínimo entre buscas de entregas, em segundos (5 a 300).
+# A MinePag pode pedir intervalos maiores; o plugin nunca busca com mais frequência que isto.
+poll-interval-seconds: 30
+
+# Busca as entregas pendentes do jogador assim que ele entra no servidor.
+check-on-join: true
+
+delivery:
+  # Comandos extras que o plugin nunca executa, mesmo que venham da loja.
+  # A lista fixa da MinePag vale sempre e não precisa ser repetida aqui: op, deop, stop, restart, reload, rl,
+  # whitelist, ban-ip, pardon-ip, save-off, transfer, sudo, esudo, plugman, minepag, mpag, lp editor,
+  # luckperms editor, lp import e luckperms import.
+  # Vale o comando raiz (com ou sem namespace, ex.: minecraft:op) ou um prefixo com argumentos (ex.: "lp editor").
+  # Comandos dentro de "execute ... run" também são verificados.
+  blocked-commands: []
+
+announcements:
+  # Anuncia as compras no chat do servidor.
+  enabled: true
+  # Intervalo mínimo entre dois anúncios, em segundos.
+  min-interval-seconds: 10
+
+# Idioma das mensagens: pt-BR ou en.
+language: pt-BR
+
+# Registra detalhes extras no console (o token nunca é registrado).
+debug: false
+
+# Mensagens em MiniMessage (https://docs.advntr.dev/minimessage/format).
+# No Spigot, as cores básicas viram o formato legado e as demais tags são removidas.
+messages:
+  pt-BR:
+    prefix: "<dark_gray>[<green>MinePag</green>]</dark_gray> "
+    no-permission: "<red>Você não tem permissão para usar este comando."
+    players-only: "<red>Só um jogador dentro do servidor pode usar este comando."
+    unknown-subcommand: "<red>Comando desconhecido. Use <white>/minepag help</white>."
+    # A ajuda mostra só os comandos que quem pediu pode usar (permissão e console ou jogador).
+    help-header: "<green><bold>MinePag</bold></green> <gray>— comandos disponíveis:"
+    help-empty: "<yellow>Nenhum comando do MinePag está disponível para você."
+    help-link: "<white>/minepag link <código></white> <gray>— vincula sua conta da loja a este nick."
+    help-pair: "<white>/minepag pair <código></white> <gray>— pareia o servidor com a loja."
+    help-unpair: "<white>/minepag unpair confirm</white> <gray>— desconecta o servidor da loja e revoga o token."
+    help-status: "<white>/minepag status</white> <gray>— mostra o estado da integração."
+    help-forcecheck: "<white>/minepag forcecheck</white> <gray>— busca entregas agora."
+    help-reload: "<white>/minepag reload</white> <gray>— recarrega o config.yml."
+    pair-usage: "<red>Use <white>/minepag pair <código></white>. Gere o código em Entregas › Minecraft, no painel."
+    pair-invalid-code: "<red>Código de pareamento inválido. Ele tem 8 letras ou números."
+    pair-started: "<gray>Pareando com a MinePag..."
+    pair-succeeded: "<green>Servidor <white><server></white> pareado com a loja <white><project></white>. As entregas começam agora."
+    pair-code-expired: "<red>O código de pareamento expirou. Gere um novo no painel."
+    pair-failed: "<red>Não foi possível parear: <reason>"
+    not-paired: "<yellow>Este servidor ainda não está pareado. Gere um código no painel e use <white>/minepag pair <código></white>."
+    unpair-confirm: "<yellow>O servidor para de receber entregas até um novo pareamento. Para continuar, use <white>/minepag unpair confirm</white>."
+    unpair-started: "<gray>Desconectando da MinePag..."
+    unpair-succeeded: "<green>Servidor desconectado. O token foi revogado e as credenciais locais foram apagadas."
+    unpair-failed: "<red>Não foi possível desconectar: <reason>"
+    forcecheck-started: "<green>Buscando entregas pendentes..."
+    forcecheck-cooldown: "<yellow>Aguarde <seconds> s para buscar de novo."
+    reload-done: "<green>Configuração recarregada."
+    link-usage: "<red>Use <white>/minepag link <código></white>. O código aparece na sua conta da loja."
+    link-invalid-code: "<red>Código de vínculo inválido. Confira o código na sua conta da loja."
+    link-invalid-nickname: "<red>Não é possível vincular este nick automaticamente. Fale com a equipe da loja."
+    link-not-available: "<red>Este servidor ainda não está conectado à loja. Avise a equipe do servidor."
+    link-started: "<gray>Vinculando sua conta..."
+    link-succeeded: "<green><message>"
+    link-failed: "<red>Não foi possível vincular: <reason>"
+    link-cooldown: "<yellow>Aguarde <seconds> s para tentar de novo."
+    rate-limited: "muitas tentativas. Aguarde um momento e tente de novo."
+    api-unavailable: "a MinePag não respondeu. Tente de novo em instantes."
+    inventory-full: "<yellow>Você tem uma compra para receber! Libere <white><slots></white> espaço(s) no inventário."
+    status:
+      - "<green><bold>MinePag</bold></green> <gray>v<version> · <platform> <mc_version>"
+      - "<gray>Loja: <white><project></white> · Servidor: <white><server></white>"
+      - "<gray>Token: <white><token></white>"
+      - "<gray>Situação: <white><state></white>"
+      - "<gray>Última busca: <white><last_poll></white> · Próxima: <white><next_poll></white>"
+      - "<gray>Falhas seguidas: <white><failures></white> · Último erro: <white><last_error></white>"
+      - "<gray>Resultados aguardando confirmação: <white><pending_acks></white>"
+    status-running: "conectado"
+    status-paused: "pausado no painel da MinePag (as entregas voltam quando o servidor for reativado)"
+    status-stopped: "parado"
+    status-halted: "parado: <reason>"
+    status-never: "nunca"
+    status-none: "nenhum"
+    announcement: "<gold><player></gold> <gray>comprou</gray> <yellow><product></yellow><gray>! Apoie o servidor em</gray> <aqua><store_url></aqua>"
+    announcement-no-store: "<gold><player></gold> <gray>comprou</gray> <yellow><product></yellow><gray>! Obrigado pelo apoio.</gray>"
+  en:
+    prefix: "<dark_gray>[<green>MinePag</green>]</dark_gray> "
+    no-permission: "<red>You do not have permission to use this command."
+    players-only: "<red>Only a player inside the server can use this command."
+    unknown-subcommand: "<red>Unknown command. Use <white>/minepag help</white>."
+    help-header: "<green><bold>MinePag</bold></green> <gray>— available commands:"
+    help-empty: "<yellow>No MinePag command is available to you."
+    help-link: "<white>/minepag link <code></white> <gray>— links your store account to this nickname."
+    help-pair: "<white>/minepag pair <code></white> <gray>— pairs this server with the store."
+    help-unpair: "<white>/minepag unpair confirm</white> <gray>— disconnects this server from the store and revokes the token."
+    help-status: "<white>/minepag status</white> <gray>— shows the integration status."
+    help-forcecheck: "<white>/minepag forcecheck</white> <gray>— checks for deliveries now."
+    help-reload: "<white>/minepag reload</white> <gray>— reloads config.yml."
+    pair-usage: "<red>Use <white>/minepag pair <code></white>. Generate the code under Deliveries › Minecraft in the dashboard."
+    pair-invalid-code: "<red>Invalid pairing code. It has 8 letters or digits."
+    pair-started: "<gray>Pairing with MinePag..."
+    pair-succeeded: "<green>Server <white><server></white> paired with the store <white><project></white>. Deliveries start now."
+    pair-code-expired: "<red>The pairing code has expired. Generate a new one in the dashboard."
+    pair-failed: "<red>Could not pair: <reason>"
+    not-paired: "<yellow>This server is not paired yet. Generate a code in the dashboard and use <white>/minepag pair <code></white>."
+    unpair-confirm: "<yellow>The server stops receiving deliveries until it is paired again. To continue, use <white>/minepag unpair confirm</white>."
+    unpair-started: "<gray>Disconnecting from MinePag..."
+    unpair-succeeded: "<green>Server disconnected. The token was revoked and the local credentials were deleted."
+    unpair-failed: "<red>Could not disconnect: <reason>"
+    forcecheck-started: "<green>Checking for pending deliveries..."
+    forcecheck-cooldown: "<yellow>Wait <seconds> s before checking again."
+    reload-done: "<green>Configuration reloaded."
+    link-usage: "<red>Use <white>/minepag link <code></white>. The code is shown in your store account."
+    link-invalid-code: "<red>Invalid link code. Check the code in your store account."
+    link-invalid-nickname: "<red>This nickname cannot be linked automatically. Contact the store staff."
+    link-not-available: "<red>This server is not connected to the store yet. Let the server staff know."
+    link-started: "<gray>Linking your account..."
+    link-succeeded: "<green><message>"
+    link-failed: "<red>Could not link: <reason>"
+    link-cooldown: "<yellow>Wait <seconds> s before trying again."
+    rate-limited: "too many attempts. Wait a moment and try again."
+    api-unavailable: "MinePag did not respond. Try again shortly."
+    inventory-full: "<yellow>You have a purchase to receive! Free <white><slots></white> inventory slot(s)."
+    status:
+      - "<green><bold>MinePag</bold></green> <gray>v<version> · <platform> <mc_version>"
+      - "<gray>Store: <white><project></white> · Server: <white><server></white>"
+      - "<gray>Token: <white><token></white>"
+      - "<gray>State: <white><state></white>"
+      - "<gray>Last check: <white><last_poll></white> · Next: <white><next_poll></white>"
+      - "<gray>Consecutive failures: <white><failures></white> · Last error: <white><last_error></white>"
+      - "<gray>Results awaiting confirmation: <white><pending_acks></white>"
+    status-running: "connected"
+    status-paused: "paused in the MinePag dashboard (deliveries resume when the server is reactivated)"
+    status-stopped: "stopped"
+    status-halted: "stopped: <reason>"
+    status-never: "never"
+    status-none: "none"
+    announcement: "<gold><player></gold> <gray>bought</gray> <yellow><product></yellow><gray>! Support the server at</gray> <aqua><store_url></aqua>"
+    announcement-no-store: "<gold><player></gold> <gray>bought</gray> <yellow><product></yellow><gray>! Thanks for the support.</gray>"
