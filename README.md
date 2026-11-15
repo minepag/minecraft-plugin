@@ -90,7 +90,7 @@ O comando também responde por `/mpag`. O tab-complete segue as mesmas permissõ
 
 | Chave | Padrão | Descrição |
 |---|---|---|
-| `api-url` | `https://minepag.com.br` | Endereço da MinePag. Só altere com orientação do suporte. Precisa ser HTTPS. |
+| `api-url` | `https://api.minepag.com.br` | Endereço da API da MinePag; o antigo `https://minepag.com.br` é trocado automaticamente. Só altere com orientação do suporte. Precisa ser HTTPS. |
 | `poll-interval-seconds` | `30` | Intervalo mínimo entre buscas (5 a 300). A MinePag pode pedir intervalos maiores; o plugin nunca busca mais rápido que isto. |
 | `check-on-join` | `true` | Busca as entregas do jogador assim que ele entra. |
 | `delivery.blocked-commands` | `[]` | Comandos extras que nunca são executados, além da lista fixa. Vale o comando raiz (`kill`, `minecraft:kill`) ou um prefixo (`eco reset`). |
