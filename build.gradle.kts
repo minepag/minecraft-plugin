@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.minepag"
-version = "1.0.0"
+version = "1.0.1"
 
 val sqliteJdbcVersion = "3.53.4.0"
 

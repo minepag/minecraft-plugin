@@ -19,7 +19,9 @@ public record PluginSettings(
         Messages messages,
         boolean debug) {
 
-    public static final URI DEFAULT_API_URL = URI.create("https://minepag.com.br");
+    public static final URI DEFAULT_API_URL = URI.create("https://api.minepag.com.br");
+    /** Endereço padrão até a versão 1.0.0. Hoje é o site da MinePag, que não atende a API. */
+    private static final Set<String> LEGACY_API_HOSTS = Set.of("minepag.com.br", "www.minepag.com.br");
     public static final String DEFAULT_LANGUAGE = "pt-BR";
     private static final Set<String> LOCAL_HOSTS = Set.of("localhost", "127.0.0.1", "[::1]", "::1", "host.docker.internal");
 
@@ -54,6 +56,10 @@ public record PluginSettings(
             String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase(Locale.ROOT);
             boolean secure = scheme.equals("https") || (scheme.equals("http") && LOCAL_HOSTS.contains(host));
             if (secure && !host.isEmpty() && uri.getUserInfo() == null && uri.getQuery() == null && uri.getFragment() == null) {
+                if (LEGACY_API_HOSTS.contains(host)) {
+                    logger.info("api-url antiga (" + uri + "); usando " + DEFAULT_API_URL + ". Atualize o config.yml.");
+                    return DEFAULT_API_URL;
+                }
                 return uri;
             }
         } catch (IllegalArgumentException invalid) {

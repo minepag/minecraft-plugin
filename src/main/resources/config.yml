@@ -4,7 +4,7 @@
 
 # Endereço da MinePag. Só altere com orientação do suporte. Precisa ser HTTPS
 # (HTTP só é aceito para localhost, em desenvolvimento).
-api-url: "https://minepag.com.br"
+api-url: "https://api.minepag.com.br"
 
 # Intervalo mínimo entre buscas de entregas, em segundos (5 a 300).
 # A MinePag pode pedir intervalos maiores; o plugin nunca busca com mais frequência que isto.
